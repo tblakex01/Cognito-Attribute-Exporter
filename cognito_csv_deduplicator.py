@@ -61,3 +61,60 @@ class CsvDeduplicator:
         self.total_rows = 0
         self.duplicate_count = 0
         self.unique_rows = 0
+
+    def validate_key_fields(self, header: List[str]) -> bool:
+        """
+        Validate that all key fields exist in the CSV header.
+        
+        Args:
+            header: List of column names from the CSV
+            
+        Returns:
+            True if all key fields exist, False otherwise
+        """
+        missing_fields = [field for field in self.key_fields if field not in header]
+        
+        if missing_fields:
+            logger.error(f"Key fields not found in CSV: {', '.join(missing_fields)}")
+            logger.error(f"Available fields: {', '.join(header)}")
+            return False
+            
+        return True
+
+    def get_row_key(self, row: Dict[str, str]) -> str:
+        """
+        Create a unique key for a row based on the key fields.
+        
+        Args:
+            row: Dictionary representing a CSV row
+            
+        Returns:
+            String key representing the unique identifier for this row
+        """
+        # Create a tuple of values for the key fields
+        key_values = tuple(row.get(field, '') for field in self.key_fields)
+        return str(key_values)
+
+    def deduplicate(self) -> bool:
+        """
+        Deduplicate the CSV file.
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Check if input file exists
+            if not os.path.exists(self.input_file):
+                logger.error(f"Input file does not exist: {self.input_file}")
+                return False
+                
+            # Read the input file to count total rows and check column names
+            with open(self.input_file, 'r', newline='', encoding='utf-8') as f:
+                reader = csv.reader(f)
+                header = next(reader, None)
+                if not header:
+                    logger.error("CSV file is empty or has no header row")
+                    return False
+                
+                # Count total rows
+                self.total_rows = sum(1 for _ in reader)

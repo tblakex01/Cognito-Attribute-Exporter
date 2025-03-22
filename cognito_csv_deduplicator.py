@@ -154,3 +154,113 @@ class CsvDeduplicator:
                 logger.info(f"Total rows: {self.total_rows}")
                 logger.info(f"Unique entities: {self.unique_rows}")
                 logger.info(f"Duplicate entries found: {self.duplicate_count}")
+                
+                # Exit early if dry run
+                if self.dry_run:
+                    logger.info("Dry run - no changes made")
+                    return True
+                
+                # Process based on deduplication strategy
+                if self.keep_first:
+                    # Keep only the first occurrence of each key
+                    seen_keys = set()
+                    deduplicated_rows = []
+                    
+                    for row_key, row in all_rows:
+                        if row_key not in seen_keys:
+                            deduplicated_rows.append(row)
+                            seen_keys.add(row_key)
+                else:
+                    # Keep only the last occurrence of each key
+                    last_occurrence = {}
+                    
+                    for row_key, row in all_rows:
+                        last_occurrence[row_key] = row
+                    
+                    deduplicated_rows = list(last_occurrence.values())
+                
+                # Write the deduplicated data
+                with open(self.output_file, 'w', newline='', encoding='utf-8') as out_file:
+                    writer = csv.DictWriter(out_file, fieldnames=reader.fieldnames)
+                    writer.writeheader()
+                    writer.writerows(deduplicated_rows)
+                
+                logger.info(f"Deduplicated data written to: {self.output_file}")
+                logger.info(f"Removed {self.total_rows - len(deduplicated_rows)} duplicate rows")
+                
+                return True
+                
+        except Exception as e:
+            logger.error(f"Error during deduplication: {str(e)}", exc_info=True)
+            return False
+
+
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description='Deduplicate CSV files exported from Cognito User Pool',
+    )
+    
+    parser.add_argument(
+        'input_file',
+        type=str,
+        help='Input CSV file to deduplicate'
+    )
+    
+    parser.add_argument(
+        '-o', '--output-file',
+        type=str,
+        help='Output CSV file (defaults to input_deduplicated.csv)'
+    )
+    
+    parser.add_argument(
+        '-k', '--keys',
+        type=str,
+        nargs='+',
+        default=['sub'],
+        help='Columns to use as unique keys (default: sub)'
+    )
+    
+    parser.add_argument(
+        '--keep-last',
+        action='store_true',
+        help='Keep the last occurrence of duplicates instead of the first'
+    )
+    
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='Only check for duplicates without modifying files'
+    )
+    
+    parser.add_argument(
+        '--verbose',
+        action='store_true',
+        help='Enable verbose logging'
+    )
+    
+    return parser.parse_args()
+
+
+def main():
+    """Main entry point for the script."""
+    args = parse_arguments()
+    
+    # Set log level
+    logging.getLogger().setLevel(logging.DEBUG if args.verbose else logging.INFO)
+    
+    # Create and run the deduplicator
+    deduplicator = CsvDeduplicator(
+        input_file=args.input_file,
+        output_file=args.output_file,
+        key_fields=args.keys,
+        keep_first=not args.keep_last,
+        dry_run=args.dry_run
+    )
+    
+    success = deduplicator.deduplicate()
+    return 0 if success else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

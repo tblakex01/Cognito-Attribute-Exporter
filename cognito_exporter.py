@@ -155,3 +155,82 @@ class CognitoExporter:
             except Exception as e:
                 logger.error(f"Unexpected error: {str(e)}")
                 raise
+
+    def discover_all_attributes(self) -> List[str]:
+        """
+        Discovers all available attributes in the user pool by sampling users.
+        
+        Returns:
+            List of attribute names found in the user pool
+        """
+        try:
+            # Try to get a sample of users to discover attributes
+            response = self.with_backoff_retry(self.get_users_without_retry)
+            
+            if not response.get('Users'):
+                logger.info("No users found in the pool. Using common attributes list.")
+                return self.COMMON_ATTRIBUTES
+                
+            # Initialize with common attribute names
+            all_attributes = set(self.COMMON_ATTRIBUTES)
+            
+            # Process the first few users to gather all possible attributes
+            for user in response.get('Users', [])[:5]:  # Sample up to 5 users
+                # Add root level attributes
+                all_attributes.update(user.keys())
+                
+                # Add attributes from the Attributes list
+                for attr in user.get('Attributes', []):
+                    all_attributes.add(attr['Name'])
+            
+            # Convert to list and sort for consistent output
+            return sorted(list(all_attributes))
+            
+        except Exception as e:
+            logger.error(f"Error discovering attributes: {str(e)}")
+            logger.info("Falling back to common attributes list.")
+            return self.COMMON_ATTRIBUTES
+
+    def get_users_without_retry(self, pagination_token: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Raw method to fetch users from Cognito without retry logic.
+        
+        Args:
+            pagination_token: Token for pagination
+            
+        Returns:
+            Response from Cognito API
+        """
+        params = {
+            'UserPoolId': self.user_pool_id,
+            'Limit': self.page_size
+        }
+        
+        if pagination_token:
+            params['PaginationToken'] = pagination_token
+            
+        return self.client.list_users(**params)
+
+    def get_users(self, pagination_token: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Fetch a page of users from the Cognito User Pool with retry logic.
+        
+        Args:
+            pagination_token: Token for pagination
+            
+        Returns:
+            Response from Cognito API with users and pagination token
+        """
+        return self.with_backoff_retry(self.get_users_without_retry, pagination_token)
+
+    def extract_user_attributes(self, user: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Extract the requested attributes from a user record.
+        
+        Args:
+            user: User record from Cognito
+            
+        Returns:
+            Dictionary with requested attributes
+        """
+        result = {attr: '' for attr in self.attributes}

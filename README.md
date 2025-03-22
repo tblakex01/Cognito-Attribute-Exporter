@@ -1,17 +1,22 @@
-# Cognito Attribute Exporter
+# 🔐 Cognito Attribute Exporter
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/)
+[![AWS](https://img.shields.io/badge/AWS-Cognito-orange)](https://aws.amazon.com/cognito/)
+[![Code Style](https://img.shields.io/badge/code%20style-PEP8-green)](https://www.python.org/dev/peps/pep-0008/)
 
 A comprehensive toolkit for exporting and managing user data from AWS Cognito User Pools.
 
-## Features
+## ✨ Features
 
-- **Robust Cognito Data Export**: Export user attributes from AWS Cognito User Pools to CSV format
-- **Exponential Backoff with Jitter**: Automatically handles AWS API rate limits with intelligent retry logic
-- **Checkpoint & Resume**: Save progress during exports and resume from where you left off
-- **CSV Deduplication**: Remove duplicate user entries from exported CSV files
-- **Flexible Attribute Selection**: Export specific attributes or discover and export all available attributes
-- **Pagination Support**: Efficiently handles large user pools with proper pagination
+- 📤 **Robust Cognito Data Export**: Export user attributes from AWS Cognito User Pools to CSV format
+- 🔄 **Exponential Backoff with Jitter**: Automatically handles AWS API rate limits with intelligent retry logic
+- ⏸️ **Checkpoint & Resume**: Save progress during exports and resume from where you left off
+- 🧹 **CSV Deduplication**: Remove duplicate user entries from exported CSV files
+- 🔍 **Flexible Attribute Selection**: Export specific attributes or discover and export all available attributes
+- 📃 **Pagination Support**: Efficiently handles large user pools with proper pagination
 
-## Installation
+## 🚀 Installation
 
 ### Prerequisites
 
@@ -34,7 +39,7 @@ A comprehensive toolkit for exporting and managing user data from AWS Cognito Us
    pip install boto3
    ```
 
-## Usage
+## 📖 Usage
 
 ### Cognito User Pool Export
 
@@ -57,22 +62,22 @@ python cognito_exporter.py --user-pool-id YOUR_POOL_ID --export-all
 
 #### Example Commands:
 
-Export all attributes:
+📋 Export all attributes:
 ```bash
 python cognito_exporter.py --user-pool-id us-east-1_abcdefghi --export-all
 ```
 
-Export specific attributes:
+📋 Export specific attributes:
 ```bash
 python cognito_exporter.py --user-pool-id us-east-1_abcdefghi --export-attributes username email phone_number
 ```
 
-Resume an interrupted export:
+📋 Resume an interrupted export:
 ```bash
 python cognito_exporter.py --user-pool-id us-east-1_abcdefghi --export-all --resume
 ```
 
-Custom retry settings:
+📋 Custom retry settings:
 ```bash
 python cognito_exporter.py --user-pool-id us-east-1_abcdefghi --export-all --max-retries 10 --base-delay 1.0
 ```
@@ -95,33 +100,33 @@ python cognito_csv_deduplicator.py CognitoUsers.csv
 
 #### Example Commands:
 
-Basic deduplication:
+📝 Basic deduplication:
 ```bash
 python cognito_csv_deduplicator.py CognitoUsers.csv
 ```
 
-Custom key fields:
+📝 Custom key fields:
 ```bash
 python cognito_csv_deduplicator.py CognitoUsers.csv -k username email
 ```
 
-Check for duplicates without making changes:
+📝 Check for duplicates without making changes:
 ```bash
 python cognito_csv_deduplicator.py CognitoUsers.csv --dry-run
 ```
 
-## Handling AWS API Rate Limits
+## ⚡ Handling AWS API Rate Limits
 
 The Cognito Exporter includes built-in features to handle AWS API rate limits:
 
-1. **Exponential Backoff**: Automatically increases wait time between retries
-2. **Jitter**: Adds randomness to retry intervals to prevent synchronized retries
-3. **Configurable Retry Parameters**: Customize max retries and delay settings
-4. **Built-in Rate Limiting**: Adds small delays between API calls to reduce throttling
+1. 📈 **Exponential Backoff**: Automatically increases wait time between retries
+2. 🎲 **Jitter**: Adds randomness to retry intervals to prevent synchronized retries
+3. ⚙️ **Configurable Retry Parameters**: Customize max retries and delay settings
+4. 🛡️ **Built-in Rate Limiting**: Adds small delays between API calls to reduce throttling
 
-## Advanced Features
+## 🔧 Advanced Features
 
-### Checkpointing
+### 🔖 Checkpointing
 
 The export process automatically saves checkpoints to allow resuming interrupted exports:
 
@@ -129,7 +134,7 @@ The export process automatically saves checkpoints to allow resuming interrupted
 - Use the `--resume` flag to continue from the last checkpoint
 - Checkpoint files are saved with the `.checkpoint` extension
 
-### Attribute Discovery
+### 🔍 Attribute Discovery
 
 When using `--export-all`, the tool automatically:
 
@@ -137,16 +142,22 @@ When using `--export-all`, the tool automatically:
 2. Includes both standard and custom attributes
 3. Falls back to common attributes if no users are found
 
-## Troubleshooting
+## ❓ Troubleshooting
 
 - **Rate Limiting Errors**: Try increasing `--base-delay` and `--max-retries`
 - **Memory Issues**: Export specific attributes instead of all attributes
 - **CSV Parsing Problems**: Ensure the CSV is properly encoded (UTF-8)
 
-## License
+## 📜 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+<p align="center">
+  Made with ❤️ for AWS Cognito users
+</p>

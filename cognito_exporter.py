@@ -234,3 +234,40 @@ class CognitoExporter:
             Dictionary with requested attributes
         """
         result = {attr: '' for attr in self.attributes}
+        
+        # Extract attributes that are at the user root level
+        for attr in self.attributes:
+            if attr in user:
+                # Handle complex objects by converting to JSON if needed
+                if isinstance(user[attr], (dict, list)):
+                    import json
+                    result[attr] = json.dumps(user[attr])
+                else:
+                    result[attr] = str(user[attr])
+                
+        # Extract attributes from the Attributes list
+        for attr_obj in user.get('Attributes', []):
+            attr_name = attr_obj['Name']
+            if attr_name in self.attributes:
+                result[attr_name] = str(attr_obj['Value'])
+                
+        return result
+
+    def save_checkpoint(self, total_exported: int) -> None:
+        """
+        Save checkpoint information to allow resuming the export.
+        
+        Args:
+            total_exported: Number of records exported so far
+        """
+        checkpoint_data = {
+            "pagination_token": self.pagination_token,
+            "total_exported": total_exported,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        import json
+        with open(f"{self.output_file}.checkpoint", 'w') as f:
+            json.dump(checkpoint_data, f)
+        
+        logger.info(f"Checkpoint saved: {total_exported} records exported, token: {self.pagination_token[:10]}...")

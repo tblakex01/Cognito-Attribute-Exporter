@@ -118,3 +118,39 @@ class CsvDeduplicator:
                 
                 # Count total rows
                 self.total_rows = sum(1 for _ in reader)
+                
+            # Re-open the file for actual processing
+            with open(self.input_file, 'r', newline='', encoding='utf-8') as in_file:
+                reader = csv.DictReader(in_file)
+                
+                # Validate key fields exist in the CSV
+                if not self.validate_key_fields(reader.fieldnames):
+                    return False
+                
+                # Set to track seen keys
+                seen_keys: Set[str] = set()
+                duplicates: Set[str] = set()
+                
+                # For dry run or keep_last mode, we need to store all rows
+                all_rows = []
+                
+                # Process all rows
+                for row in reader:
+                    row_key = self.get_row_key(row)
+                    
+                    # Store the row for later processing
+                    all_rows.append((row_key, row))
+                    
+                    # Track duplicates
+                    if row_key in seen_keys:
+                        duplicates.add(row_key)
+                    else:
+                        seen_keys.add(row_key)
+                
+                self.duplicate_count = len(duplicates)
+                self.unique_rows = len(seen_keys)
+                
+                # Report findings
+                logger.info(f"Total rows: {self.total_rows}")
+                logger.info(f"Unique entities: {self.unique_rows}")
+                logger.info(f"Duplicate entries found: {self.duplicate_count}")

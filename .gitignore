@@ -8,10 +8,12 @@ dist/
 build/
 *.egg-info/
 
-# Virtual environments
+# Virtual environments / env files
 venv/
+.venv/
 env/
 .env/
+.env
 
 # IDE specific files
 .idea/

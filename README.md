@@ -1,7 +1,7 @@
 # 🔐 Cognito Attribute Exporter
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
 [![AWS](https://img.shields.io/badge/AWS-Cognito-orange)](https://aws.amazon.com/cognito/)
 [![Code Style](https://img.shields.io/badge/code%20style-PEP8-green)](https://www.python.org/dev/peps/pep-0008/)
 
@@ -20,7 +20,7 @@ A comprehensive toolkit for exporting and managing user data from AWS Cognito Us
 
 ### Prerequisites
 
-- Python 3.6+
+- Python 3.10+
 - AWS credentials configured (either via environment variables, credentials file, or IAM role)
 - Required Python packages:
   - boto3
@@ -159,5 +159,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ---
 
 <p align="center">
-  Made with ❤️ for AWS Cognito users
+  Made with ❤️ for AWS Cognito users by Anthony Michaels.
 </p>

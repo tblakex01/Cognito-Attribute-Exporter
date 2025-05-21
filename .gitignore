@@ -30,3 +30,6 @@ env/
 
 # AWS credentials
 .aws/
+
+# Pytest
+.pytest_cache/

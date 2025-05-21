@@ -22,9 +22,7 @@ A comprehensive toolkit for exporting and managing user data from AWS Cognito Us
 
 - Python 3.10+
 - AWS credentials configured (either via environment variables, credentials file, or IAM role)
-- Required Python packages:
-  - boto3
-  - botocore
+- Poetry for dependency management.
 
 ### Setup
 
@@ -34,10 +32,24 @@ A comprehensive toolkit for exporting and managing user data from AWS Cognito Us
    cd Cognito-Attribute-Exporter
    ```
 
-2. Install dependencies:
+2. Install dependencies using Poetry:
    ```bash
-   pip install boto3
+   poetry install
    ```
+   Poetry will handle the creation of a virtual environment and installation of all necessary dependencies.
+
+## 🧪 Running Tests
+
+This project uses Pytest for testing. To run the tests:
+
+1.  Ensure you have installed the development dependencies:
+    ```bash
+    poetry install --with dev
+    ```
+2.  Run Pytest:
+    ```bash
+    poetry run pytest
+    ```
 
 ## 📖 Usage
 

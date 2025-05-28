@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "A comprehensive toolkit for exporting and managing user data from AWS Cognito User Pools."
 authors = ["Your Name <you@example.com>"] # Placeholder, can be updated by user
 readme = "README.md"
-package-mode = false
+package-mode = true
+packages = [{include = "cognito_attribute_exporter"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -12,6 +13,10 @@ boto3 = "^1.34.0" # Using a recent version
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
+
+[tool.poetry.scripts]
+cognito-export = "cognito_attribute_exporter.cognito_exporter:main"
+cognito-dedup = "cognito_attribute_exporter.cognito_csv_deduplicator:main"
 
 [build-system]
 requires = ["poetry-core"]

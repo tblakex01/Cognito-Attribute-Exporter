@@ -13,6 +13,9 @@ import sys
 import time
 import random
 import logging
+import os
+import gzip
+import shutil
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from botocore.exceptions import ClientError
 from typing import Dict, List, Optional, Any, Tuple
@@ -79,7 +82,7 @@ class CognitoExporter:
         starting_token: str = None,
         max_retries: int = None,
         base_delay: float = None,
-        filter_param: str = None,
+        filter_expression: str = None,
         group_name: str = None,
     ):
         """
@@ -97,7 +100,7 @@ class CognitoExporter:
             starting_token: Token to resume pagination from a previous run
             max_retries: Maximum number of retry attempts (defaults to class constant)
             base_delay: Base delay for exponential backoff (defaults to class constant)
-            filter_param: Optional filter expression for Cognito list_users
+            filter_expression: Optional filter expression for Cognito list_users
             group_name: Optional Cognito group name to export users from
         """
         self.user_pool_id = user_pool_id
@@ -125,7 +128,7 @@ class CognitoExporter:
         self.attributes = attributes
 
         # Filtering/group options
-        self.filter_param = filter_param
+        self.filter_expression = filter_expression
         self.group_name = group_name
 
         # If export_all is requested, we need to determine all available attributes
@@ -235,8 +238,8 @@ class CognitoExporter:
             params = {"UserPoolId": self.user_pool_id, "Limit": self.page_size}
             if pagination_token:
                 params["PaginationToken"] = pagination_token
-            if self.filter_param:
-                params["Filter"] = self.filter_param
+            if self.filter_expression:
+                params["Filter"] = self.filter_expression
             return self.client.list_users(**params)
 
     def get_users(self, pagination_token: Optional[str] = None) -> Dict[str, Any]:
@@ -301,25 +304,24 @@ class CognitoExporter:
 
     def upload_to_s3(self, bucket: str, key: Optional[str] = None, compress: bool = False) -> None:
         """Upload the exported CSV to S3, optionally compressing it first."""
-        import os
-        import gzip
-        import shutil
-
         file_to_upload = self.output_file
         upload_key = key or os.path.basename(self.output_file)
+        gz_path = None  # Initialize gz_path
 
-        if compress:
-            gz_path = f"{self.output_file}.gz"
-            with open(self.output_file, "rb") as src, gzip.open(gz_path, "wb") as dst:
-                shutil.copyfileobj(src, dst)
-            file_to_upload = gz_path
-            upload_key = key or os.path.basename(gz_path)
+        try:
+            if compress:
+                gz_path = f"{self.output_file}.gz"
+                with open(self.output_file, "rb") as src, gzip.open(gz_path, "wb") as dst:
+                    shutil.copyfileobj(src, dst)
+                file_to_upload = gz_path
+                upload_key = key or os.path.basename(gz_path)
 
-        self.with_backoff_retry(self.s3_client.upload_file, file_to_upload, bucket, upload_key)
-        logger.info(f"Uploaded {file_to_upload} to s3://{bucket}/{upload_key}")
+            self.with_backoff_retry(self.s3_client.upload_file, file_to_upload, bucket, upload_key)
+            logger.info(f"Uploaded {file_to_upload} to s3://{bucket}/{upload_key}")
 
-        if compress and os.path.exists(gz_path):
-            os.remove(gz_path)
+        finally:
+            if compress and gz_path and os.path.exists(gz_path):
+                os.remove(gz_path)
 
     def export_users(self) -> int:
         """
@@ -420,7 +422,7 @@ def parse_arguments():
 
     parser.add_argument("--profile", type=str, default=None, help="The AWS profile to use")
 
-    parser.add_argument("--filter", type=str, default=None, help="Filter expression for list_users")
+    parser.add_argument("--filter-expression", type=str, default=None, help="Filter expression for list_users")
     parser.add_argument("--group-name", type=str, default=None, help="Name of Cognito group to export")
 
     parser.add_argument("--starting-token", type=str, default=None, help="Starting pagination token (for resuming interrupted exports)")
@@ -504,7 +506,7 @@ def main():
             starting_token=starting_token,
             max_retries=args.max_retries,
             base_delay=args.base_delay,
-            filter_param=args.filter,
+            filter_expression=args.filter_expression,
             group_name=args.group_name,
         )
 

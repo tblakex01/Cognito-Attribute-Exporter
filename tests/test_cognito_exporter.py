@@ -84,7 +84,7 @@ class TestCognitoExporterS3Upload(unittest.TestCase):
         with self.assertRaises(ClientError) as context:
             self.exporter.upload_to_s3(bucket=bucket_name, key=s3_key, compress=True)
 
-        self.assertTrue(str(context.exception), "Mock S3 error")
+        self.assertIn("Mock S3 error", str(context.exception))
 
         self.exporter.s3_client.upload_file.assert_called_once_with(
             self.test_output_gz_filename,

@@ -10,9 +10,12 @@ packages = [{include = "cognito_attribute_exporter"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 boto3 = "^1.34.0" # Using a recent version
+botocore = "^1.34.0" # Explicitly required for tests
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
+black = "^24.4.2"
+flake8 = "^7.0.0"
 
 [tool.poetry.scripts]
 cognito-export = "cognito_attribute_exporter.cognito_exporter:main"
@@ -21,3 +24,11 @@ cognito-dedup = "cognito_attribute_exporter.cognito_csv_deduplicator:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ['E203', 'W503']

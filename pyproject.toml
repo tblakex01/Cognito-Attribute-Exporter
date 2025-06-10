@@ -10,6 +10,7 @@ packages = [{include = "cognito_attribute_exporter"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 boto3 = "^1.34.0" # Using a recent version
+botocore = "^1.34.0" # Explicitly required for tests
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"

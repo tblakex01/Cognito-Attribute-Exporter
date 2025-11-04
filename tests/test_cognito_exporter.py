@@ -3,9 +3,11 @@ from unittest.mock import patch, MagicMock
 import os
 import gzip
 import shutil
+import sys
+from io import StringIO
 from botocore.exceptions import ClientError
 
-from cognito_attribute_exporter.cognito_exporter import CognitoExporter
+from cognito_attribute_exporter.cognito_exporter import CognitoExporter, parse_arguments
 
 # Helper to bypass the retry decorator for specific tests
 def mock_with_backoff_retry_passthrough(func, *args, **kwargs):
@@ -122,6 +124,81 @@ class TestCognitoExporterS3Upload(unittest.TestCase):
             expected_s3_key
         )
         self.assertFalse(os.path.exists(self.test_output_gz_filename))
+
+
+class TestArgumentParsing(unittest.TestCase):
+    """Test argument parsing, especially mutual exclusivity constraints."""
+
+    def test_filter_expression_and_group_name_mutual_exclusivity(self):
+        """Test that --filter-expression and --group-name cannot be used together."""
+        # Save original sys.argv
+        original_argv = sys.argv
+
+        try:
+            # Attempt to use both --filter-expression and --group-name
+            sys.argv = [
+                'test',
+                '--user-pool-id', 'us-east-1_test',
+                '--export-all',
+                '--filter-expression', 'email ^= "test"',
+                '--group-name', 'TestGroup'
+            ]
+
+            # Capture stderr to check for the mutual exclusivity error
+            with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+                with self.assertRaises(SystemExit) as cm:
+                    parse_arguments()
+
+                # Check that it exited with error code
+                self.assertNotEqual(cm.exception.code, 0)
+
+                # Check that the error message mentions the mutual exclusivity
+                stderr_output = mock_stderr.getvalue()
+                self.assertIn('not allowed with argument', stderr_output.lower())
+
+        finally:
+            # Restore original sys.argv
+            sys.argv = original_argv
+
+    def test_filter_expression_alone_is_valid(self):
+        """Test that --filter-expression can be used alone."""
+        original_argv = sys.argv
+
+        try:
+            sys.argv = [
+                'test',
+                '--user-pool-id', 'us-east-1_test',
+                '--export-all',
+                '--filter-expression', 'email ^= "test"'
+            ]
+
+            # This should not raise an exception
+            args = parse_arguments()
+            self.assertEqual(args.filter_expression, 'email ^= "test"')
+            self.assertIsNone(args.group_name)
+
+        finally:
+            sys.argv = original_argv
+
+    def test_group_name_alone_is_valid(self):
+        """Test that --group-name can be used alone."""
+        original_argv = sys.argv
+
+        try:
+            sys.argv = [
+                'test',
+                '--user-pool-id', 'us-east-1_test',
+                '--export-all',
+                '--group-name', 'TestGroup'
+            ]
+
+            # This should not raise an exception
+            args = parse_arguments()
+            self.assertIsNone(args.filter_expression)
+            self.assertEqual(args.group_name, 'TestGroup')
+
+        finally:
+            sys.argv = original_argv
 
 
 if __name__ == '__main__':

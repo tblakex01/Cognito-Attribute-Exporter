@@ -422,8 +422,10 @@ def parse_arguments():
 
     parser.add_argument("--profile", type=str, default=None, help="The AWS profile to use")
 
-    parser.add_argument("--filter-expression", type=str, default=None, help="Filter expression for list_users")
-    parser.add_argument("--group-name", type=str, default=None, help="Name of Cognito group to export")
+    # Create mutually exclusive group for filtering options
+    filter_group = parser.add_mutually_exclusive_group()
+    filter_group.add_argument("--filter-expression", type=str, default=None, help="Filter expression for list_users (cannot be used with --group-name)")
+    filter_group.add_argument("--group-name", type=str, default=None, help="Name of Cognito group to export (cannot be used with --filter-expression)")
 
     parser.add_argument("--starting-token", type=str, default=None, help="Starting pagination token (for resuming interrupted exports)")
 

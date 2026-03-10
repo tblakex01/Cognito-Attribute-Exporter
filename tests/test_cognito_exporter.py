@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
 import os
-import gzip
-import shutil
 import sys
 from io import StringIO
 from botocore.exceptions import ClientError
@@ -199,6 +197,33 @@ class TestArgumentParsing(unittest.TestCase):
 
         finally:
             sys.argv = original_argv
+
+
+class TestCsvFormulaSanitization(unittest.TestCase):
+
+    def setUp(self):
+        with patch('boto3.client'), patch('boto3.Session'):
+            self.exporter = CognitoExporter(
+                user_pool_id="us-east-1_testpool",
+                region="us-east-1",
+                attributes=["email", "custom:note"]
+            )
+
+    def test_extract_user_attributes_sanitizes_formula_prefixes(self):
+        user = {
+            "Attributes": [
+                {"Name": "email", "Value": "attacker@example.com"},
+                {"Name": "custom:note", "Value": '=HYPERLINK("http://evil","click")'},
+            ]
+        }
+
+        extracted = self.exporter.extract_user_attributes(user)
+
+        self.assertEqual(extracted["email"], "attacker@example.com")
+        self.assertEqual(extracted["custom:note"], '\'=HYPERLINK("http://evil","click")')
+
+    def test_sanitize_csv_value_leaves_safe_values_unchanged(self):
+        self.assertEqual(self.exporter.sanitize_csv_value("normal text"), "normal text")
 
 
 if __name__ == '__main__':

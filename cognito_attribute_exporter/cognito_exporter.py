@@ -68,6 +68,7 @@ class CognitoExporter:
     BASE_DELAY = 0.5  # Base delay in seconds
     MAX_DELAY = 30.0  # Maximum delay in seconds
     JITTER = 0.25  # Jitter factor for randomization
+    CSV_FORMULA_PREFIXES = ("=", "+", "-", "@")
 
     def __init__(
         self,
@@ -272,19 +273,26 @@ class CognitoExporter:
                 # Handle complex objects by converting to JSON if needed
                 if isinstance(user[attr], (dict, list)):
                     import json
-                    result[attr] = json.dumps(user[attr])
+                    result[attr] = self.sanitize_csv_value(json.dumps(user[attr]))
                 else:
                     # Always use string representation
-                    result[attr] = str(user[attr])
+                    result[attr] = self.sanitize_csv_value(str(user[attr]))
 
         # Extract attributes from the Attributes list
         for attr_obj in user.get("Attributes", []):
             attr_name = attr_obj["Name"]
             if attr_name in self.attributes:
                 # Ensure all values are stored as strings
-                result[attr_name] = str(attr_obj["Value"])
+                result[attr_name] = self.sanitize_csv_value(str(attr_obj["Value"]))
 
         return result
+
+    @classmethod
+    def sanitize_csv_value(cls, value: str) -> str:
+        """Prevent spreadsheet formula execution for exported CSV values."""
+        if value and value[0] in cls.CSV_FORMULA_PREFIXES:
+            return f"'{value}"
+        return value
 
     def save_checkpoint(self, total_exported: int) -> None:
         """
